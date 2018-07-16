@@ -14,7 +14,20 @@ class OuoCarousel {
 
     // add className and dots
     this.dotsContainer = document.createElement("div");
-    this.dotsContainer.setAttribute("class", "ouoCarousel-panel js-ouoCarousel-panel");
+    this.panelContainer = document.createElement("div");
+    this.dotsContainer.setAttribute("class", "ouoCarousel-dots js-ouoCarousel-dots");
+    this.panelContainer.setAttribute("class", "ouoCarousel-panel js-ouoCarousel-panel");
+   
+    let prev = document.createElement("span");
+    let next = document.createElement("span");
+    prev.setAttribute("data-block", "prev");
+    prev.setAttribute("class", "ouoCarousel-prev");
+    next.setAttribute("data-block", "next");
+    next.setAttribute("class", "ouoCarousel-next");
+
+    this.panelContainer.appendChild(next);
+    this.panelContainer.appendChild(prev);
+
     Array.prototype.map.call(this.carouselDoms, (dom, i) => {
       dom.className += " ouoCarousel-carousel";
       let dot = document.createElement("span");
@@ -28,8 +41,8 @@ class OuoCarousel {
       this.dotDoms.push(dot);
       this.dotsContainer.appendChild(dot);
     });
-
-    carouselContainerDom.parentNode.append(this.dotsContainer);
+    this.panelContainer.append(this.dotsContainer);
+    carouselContainerDom.parentNode.append(this.panelContainer);
     this.carouselDoms = Array.prototype.slice.call(this.carouselDoms,0, this.carouselCount);
 
     // this.generateDots();
@@ -40,8 +53,7 @@ class OuoCarousel {
       clearInterval(this.setTimeId)
     );
 
-    this.dotsContainer
-      .addEventListener("click", this.handleChangeFigure.bind(this));
+    this.panelContainer.addEventListener("click", this.handleChangeFigure.bind(this));
 
 
     // generate arrows
@@ -135,11 +147,20 @@ class OuoCarousel {
   handleChangeFigure(evt) {
     clearInterval(this.setTimeId);
     const target = evt.target.getAttribute("data-block");
-    if (target) {
+    if(target){
       this.prevNumber = this.currentNumber;
-      this.currentNumber = target;
-      this.changeFigure(this.currentNumber , this.widthPerCarousel, true);
-
+      switch (target) {
+        case "prev":
+        this.currentNumber = this.currentNumber === 0 ? 0 : this.currentNumber - 1;
+          break;
+        case "next":
+          this.currentNumber = this.currentNumber === this.carouselCount  -1?this.carouselCount  -1 : this.currentNumber + 1;
+          break;
+        default:
+          this.currentNumber = target;
+          break;
+      }
+      this.changeFigure(this.currentNumber, this.widthPerCarousel, true);
       this.setDotState();
     }
   }

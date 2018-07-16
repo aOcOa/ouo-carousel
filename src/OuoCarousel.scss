@@ -29,27 +29,21 @@
 
 .ouoCarousel{
   overflow: hidden;
-  margin-bottom: 60px;
   position: relative;
-  width: 80%;
-  max-width: 1440px;
+  width: 100%;
   margin: 0 auto;
-   
 }
 .ouoCarousel-carousel{
     float: left;
     display: inline-block;
     padding: 0;
     margin: 16px auto 24px;
-
-      max-width: 100%;
-        margin-top: 8%;
-        max-height: 510px;
-        height: auto;
-        // clip-path: polygon(26.4% 0%, 73.6% 0%, 73.6% 100%, 26.4% 100%);
-        clip-path: polygon(16% 0%, 84% 0%, 84% 100%, 16% 100%);
-        transform: scale(1.47);
-        
+    max-width: 100%;
+    margin-top: 8%;
+    max-height: 510px;
+    height: auto;
+    clip-path: polygon(16% 0%, 84% 0%, 84% 100%, 16% 100%);
+    transform: scale(1.47);
   @include carousel {
     clip-path: none;
     max-height: inherit;
@@ -58,7 +52,7 @@
     margin-top: 0;
   }
 }
-.ouoCarousel-panel{
+.ouoCarousel-dots{
   position: absolute;
   left: 0;
   right: 0;
@@ -80,4 +74,44 @@
     background-color: rgb(255, 241, 115);
   }
 
+}
+
+.ouoCarousel-next, .ouoCarousel-prev {
+    position: absolute;
+    top: 50%;
+    width: 40px;
+    height: 100%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    @include tablet{
+      width: 80px;
+      font-size: 4rem;
+    }
+    &:after{
+      top: 50%;
+      content: "";
+      font-size: 2rem;
+      color: #efefef;
+      border: 2px solid #d3d2d3;
+      width: 16px;
+      height: 16px;
+      position: absolute;
+      transform: translateY(-50%) rotate(-45deg);
+    }
+}
+.ouoCarousel-next {
+  right: 0;
+  &:after{
+    right: 10px;
+    border-top: 0;
+    border-left:0;
+  }
+}
+.ouoCarousel-prev {
+  left: 0;
+  &:after{
+    left: 10px;
+     border-bottom: 0;
+    border-right:0;
+  }
 }
