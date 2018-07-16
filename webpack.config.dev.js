@@ -3,7 +3,7 @@ const path = require('path');
 
 module.exports = {
   mode: "development",
-  entry: path.resolve(__dirname, "src/script.js"),
+  entry: ["babel-polyfill",path.resolve(__dirname, "src/script.js")],
   devtool: "inline-source-map",
   devServer: {
     contentBase: "./example",
