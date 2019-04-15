@@ -1,4 +1,7 @@
 import "./OuoCarousel.scss";
+// TODO: infinite
+// TODO: bind animport '../../../sass/molecules/_carousel.scss';
+import { removeClass, addClass } from "./utils/domHelper";
 
 export default class OuoCarousel {
   constructor({
@@ -6,35 +9,97 @@ export default class OuoCarousel {
     carouselContainerDom,
     supportMobile = true,
     enableAutoloop = true,
+    pivotContainerDom = null,
     enableDot = true,
-    enableArrow = true
+    enableArrow = true,
+    enableInfiniteLoop = false,
+    transitionTime = 300,
+    loopTime = 2000
   }) {
     this.context = context;
-    this.currentNumber = 0;
-    this.prevNumber = 0;
+    this.currentNumber = enableInfiniteLoop ? 1 : 0;
+    this.prevNumber = enableInfiniteLoop ? 1 : 0;
     this.dotsData = {};
     this.carouselContainerDom = carouselContainerDom;
     this.carouselDoms = this.carouselContainerDom.children;
-    this.carouselCount = this.carouselDoms.length;
+    this.uiCarouselCount = this.carouselDoms.length;
+    this.logicCarouselCount = this.uiCarouselCount;
+    this.enableInfiniteLoop = enableInfiniteLoop;
+    this.pivotContainerDom = pivotContainerDom;
+    this.transitionTime = parseInt(transitionTime, 10) || 300;
+    this.loopTime = parseInt(loopTime, 10) || 2000;
 
-    this.widthPerCarousel = 100 / this.carouselCount;
+    if (enableInfiniteLoop) {
+      this.logicCarouselCount = this.uiCarouselCount + 2;
+      this.prepareInfiniteLoop();
+    }
+    this.widthPerCarousel = 100 / this.logicCarouselCount;
 
-    this.createPanel(enableDot, enableArrow, this.carouselCount).then(
-      () => {
-        this.setDefaultStyle(
-          this.carouselContainerDom,
-          this.carouselDoms,
-          this.carouselCount,
-          this.widthPerCarousel
-        );
-        this.bindEvent(supportMobile);
-      }
+    if (pivotContainerDom) {
+      this.pivots = pivotContainerDom.children;
+      addClass(this.pivots[0], "is-active");
+    }
+
+    this.createPanel(enableDot, enableArrow, this.uiCarouselCount)
+      .setDefaultStyle()
+      .bindEvent(supportMobile);
+  }
+  prepareInfiniteLoop() {
+    this.carouselContainerDom.insertAdjacentElement(
+      "afterbegin",
+      this.carouselDoms[this.uiCarouselCount - 1].cloneNode(true)
     );
-    // this.setDefaultStyle();
+    this.carouselContainerDom.insertAdjacentElement(
+      "beforeend",
+      this.carouselDoms[1].cloneNode(true)
+    );
+  }
+  createPanel(enableDot, enableArrow, carouselCount) {
+    this.panelContainer = this.context.createElement("div");
+
+    this.panelContainer.setAttribute(
+      "class",
+      "ouoCarousel-panel js-ouoCarousel-panel"
+    );
+
+    if (enableDot) {
+      this.dotsData = this._createDotData(carouselCount);
+      this.panelContainer.appendChild(this.dotsData.dotsContainer);
+    }
+
+    if (enableArrow) {
+      this.panelContainer.appendChild(this._createArrowsDom());
+    }
+
+    this.carouselContainerDom.parentNode.appendChild(this.panelContainer);
+    return this;
+  }
+  setDefaultStyle() {
+    const {
+      carouselContainerDom,
+      carouselDoms,
+      logicCarouselCount,
+      widthPerCarousel,
+      enableInfiniteLoop,
+      currentNumber
+    } = this;
+
+    Array.prototype.map.call(carouselDoms, (dom, i) => {
+      dom.className += " ouoCarousel-carousel";
+    });
+
+    carouselContainerDom.style.width = logicCarouselCount * 100 + "%";
+
+    Array.prototype.map.call(carouselDoms, (dom, i) => {
+      dom.style.width = widthPerCarousel + "%";
+    });
+
+    this._changeFigure(currentNumber, widthPerCarousel, false);
+    return this;
   }
   bindEvent(supportMobile) {
-    this.setTimeId = setInterval(this._autoLoop.bind(this), 3000);
-    
+    this.setTimeId = setInterval(this._autoLoop.bind(this), this.loopTime);
+
     this.carouselContainerDom.addEventListener("click", () =>
       clearInterval(this.setTimeId)
     );
@@ -43,7 +108,12 @@ export default class OuoCarousel {
       "click",
       this._handleChangeFigure.bind(this)
     );
-
+    if (this.pivotContainerDom) {
+      this.pivotContainerDom.addEventListener(
+        "mouseover",
+        this._handleChangeFigure.bind(this)
+      );
+    }
     if (supportMobile) {
       this.carouselContainerDom.parentNode.addEventListener(
         "touchstart",
@@ -65,75 +135,82 @@ export default class OuoCarousel {
   _autoLoop() {
     this.prevNumber = this.currentNumber;
 
-    if (this.currentNumber === this.carouselDoms.length - 1) {
-      this.currentNumber = 0;
-    } else {
+    if (this.enableInfiniteLoop) {
       this.currentNumber++;
+      this._changeFigure(this.currentNumber, this.widthPerCarousel, true);
+
+      if (this.currentNumber === 0) {
+        this.currentNumber = this.logicCarouselCount - 2;
+        setTimeout(() => {
+          this._changeFigure(this.currentNumber, this.widthPerCarousel, false);
+        }, this.transitionTime);
+      }
+    } else {
+      if (this.currentNumber === this.logicCarouselCount - 1) {
+        this.currentNumber = 0;
+      } else {
+        this.currentNumber++;
+      }
+      this._changeFigure(this.currentNumber, this.widthPerCarousel, true);
     }
 
-    this._changeFigure(this.currentNumber, this.widthPerCarousel, true);
-
-    this._setDotState(this.dotsData.dotsDom, this.prevNumber, this.currentNumber);
+    this._setElementActiveState(
+      this.dotsData.dotsDom,
+      this.prevNumber,
+      this.currentNumber
+    );
+    this._setElementActiveState(
+      this.pivots,
+      this.prevNumber,
+      this.currentNumber
+    );
   }
   _createArrowsDom() {
-    return new Promise((resolve, reject) => {
-      try {
-        let arrowsContainer = this.context.createDocumentFragment();
-        let prev = this.context.createElement("span");
-        let next = this.context.createElement("span");
+    let arrowsContainer = this.context.createDocumentFragment();
+    let prev = this.context.createElement("span");
+    let next = this.context.createElement("span");
 
-        prev.setAttribute("data-block", "prev");
-        prev.setAttribute("class", "ouoCarousel-prev");
-        next.setAttribute("data-block", "next");
-        next.setAttribute("class", "ouoCarousel-next");
+    prev.setAttribute("data-block", "prev");
+    prev.setAttribute("class", "ouoCarousel-prev");
+    next.setAttribute("data-block", "next");
+    next.setAttribute("class", "ouoCarousel-next");
 
-        arrowsContainer.appendChild(prev);
-        arrowsContainer.appendChild(next);
+    arrowsContainer.appendChild(prev);
+    arrowsContainer.appendChild(next);
 
-        resolve(arrowsContainer);
-      } catch (e) {
-        reject(e);
-      }
-    });
+    return arrowsContainer;
   }
   _createDotData(count) {
-    return new Promise((resolve, reject) => {
-      try {
-        let dotsContainer = this.context.createElement("div");
-       dotsContainer.setAttribute('class', 'ouoCarousel-dots')
-        let dotsDom = [];
-        for (let i = 0; i < count; i++) {
-          let dot = this.context.createElement("span");
-          dot.setAttribute("data-block", i);
+    let dotsContainer = this.context.createElement("div");
+    dotsContainer.setAttribute("class", "ouoCarousel-dots");
+    let dotsDom = [];
+    for (let i = 0; i < count; i++) {
+      let dot = this.context.createElement("span");
+      dot.setAttribute("data-block", i);
 
-          if (i === 0) {
-            dot.setAttribute(
-              "class",
-              "ouoCarousel-dot js-ouoCarousel-dot is-active"
-            );
-          } else {
-            dot.setAttribute("class", "ouoCarousel-dot js-ouoCarousel-dot");
-          }
-
-          dotsDom.push(dot);
-          dotsContainer.appendChild(dot);
-        }
-
-        resolve({ dotsDom, dotsContainer });
-      } catch (e) {
-        reject(e);
+      if (i === 0) {
+        dot.setAttribute(
+          "class",
+          "ouoCarousel-dot js-ouoCarousel-dot is-active"
+        );
+      } else {
+        dot.setAttribute("class", "ouoCarousel-dot js-ouoCarousel-dot");
       }
-    });
+
+      dotsDom.push(dot);
+      dotsContainer.appendChild(dot);
+    }
+    return { dotsDom, dotsContainer };
   }
   _handleTouchStart(evt) {
     clearInterval(this.setTimeId);
-    this.flag = false;
+    this.hasMoved = false;
     this.prevTransform =
-      this.carouselContainerDom.style.transform || `translate3d(0, 0, 0)`;
+      this.carouselContainerDom.style.transform || "translate3d(0, 0, 0)";
     this.firstClientX = evt.touches[0].clientX;
   }
   _handleTouchMove(evt) {
-    this.flag = true;
+    this.hasMoved = true;
     this.latestClientX = evt.touches[0].clientX;
     let offset = this.latestClientX - this.firstClientX;
     offset = this.currentOffset - offset;
@@ -142,36 +219,58 @@ export default class OuoCarousel {
   }
   _handleTouchEnd(evt) {
     evt.stopPropagation();
+    const moveOffset = this.latestClientX - this.firstClientX;
     if (
-      this.flag &&
-      this.latestClientX - this.firstClientX < -50 &&
+      this.hasMoved &&
+      moveOffset < -50 &&
       this.currentNumber !== this.carouselDoms.length - 1
     ) {
       this.prevNumber = this.currentNumber++;
       this._changeFigure(this.currentNumber, this.widthPerCarousel, true);
-      this._setDotState(this.dotsData.dotsDom, this.prevNumber, this.currentNumber);
-    } else if (
-      this.flag &&
-      this.latestClientX - this.firstClientX > 50 &&
-      this.currentNumber !== 0
-    ) {
+      this._setElementActiveState(
+        this.dotsData.dotsDom,
+        this.prevNumber,
+        this.currentNumber
+      );
+    } else if (this.hasMoved && moveOffset > 50 && this.currentNumber !== 0) {
       this.prevNumber = this.currentNumber--;
       this._changeFigure(this.currentNumber, this.widthPerCarousel, true);
-      this._setDotState(this.dotsData.dotsDom, this.prevNumber, this.currentNumber);
+      this._setElementActiveState(
+        this.dotsData.dotsDom,
+        this.prevNumber,
+        this.currentNumber
+      );
     } else {
       this.carouselContainerDom.style.transform = this.prevTransform;
     }
+    if (this.enableInfiniteLoop) {
+      this._infinitePositionReset();
+    }
   }
-  _setDotState(dotsDom,prevNumber,currentNumber) {
-    dotsDom[prevNumber].className = dotsDom[
-      prevNumber
-    ].className.replace(" is-active", "");
-
-    dotsDom[currentNumber].className += " is-active";
+  _setElementActiveState(elementDoms, prevNumber, currentNumber) {
+    if (elementDoms && elementDoms.length === this.uiCarouselCount) {
+      if (this.enableInfiniteLoop) {
+        const prevIndex = (prevNumber - 1) % this.uiCarouselCount;
+        removeClass(elementDoms[prevIndex], "is-active");
+        if (currentNumber === 0) {
+          addClass(elementDoms[this.uiCarouselCount - 1], "is-active");
+        } else {
+          addClass(
+            elementDoms[(currentNumber - 1) % this.uiCarouselCount],
+            "is-active"
+          );
+        }
+      } else {
+        removeClass(elementDoms[prevNumber], "is-active");
+        addClass(elementDoms[currentNumber], "is-active");
+      }
+    }
   }
   _changeFigure(offsetCount, witdh, animation) {
     if (animation) {
-      this.carouselContainerDom.style.transition = "0.3s ease-in-out";
+      this.carouselContainerDom.style.transition = `${
+        this.transitionTime
+      }ms ease-in-out`;
     } else {
       this.carouselContainerDom.style.transition = "0s";
     }
@@ -185,6 +284,7 @@ export default class OuoCarousel {
   _handleChangeFigure(evt) {
     clearInterval(this.setTimeId);
     const target = evt.target.getAttribute("data-block");
+
     if (target) {
       this.prevNumber = this.currentNumber;
       switch (target) {
@@ -194,87 +294,43 @@ export default class OuoCarousel {
           break;
         case "next":
           this.currentNumber =
-            this.currentNumber === this.carouselCount - 1
-              ? this.carouselCount - 1
+            this.currentNumber === this.logicCarouselCount - 1
+              ? this.logicCarouselCount - 1
               : this.currentNumber + 1;
           break;
         default:
-          this.currentNumber = parseInt(target, 10);
+          this.currentNumber = this.enableInfiniteLoop
+            ? parseInt(target, 10) + 1
+            : parseInt(target, 10);
           break;
       }
       this._changeFigure(this.currentNumber, this.widthPerCarousel, true);
-      this._setDotState(this.dotsData.dotsDom, this.prevNumber, this.currentNumber);
+      this._setElementActiveState(
+        this.dotsData.dotsDom,
+        this.prevNumber,
+        this.currentNumber
+      );
+      this._setElementActiveState(
+        this.pivots,
+        this.prevNumber,
+        this.currentNumber
+      );
+      if (this.enableInfiniteLoop) {
+        this._infinitePositionReset();
+      }
     }
   }
-  createPanel(enableDot, enableArrow, carouselCount) {
-    return new Promise((resolve, reject) => {
-      try {
-        this.panelContainer = this.context.createElement("div");
-
-        this.panelContainer.setAttribute(
-          "class",
-          "ouoCarousel-panel js-ouoCarousel-panel"
-        );
-
-        if (enableDot) {
-          this.dotsData = this._createDotData(carouselCount)
-            .then(dotsData => {
-              this.dotsData = dotsData;
-              this.panelContainer.appendChild(dotsData.dotsContainer);
-            })
-            .catch();
-        }
-
-        if (enableArrow) {
-          let arrowsDom;
-
-          this._createArrowsDom()
-            .then(arrowsDom => this.panelContainer.appendChild(arrowsDom))
-            .catch();
-        }
-
-        this.carouselContainerDom.parentNode.append(this.panelContainer);
-        resolve();
-      } catch (e) {
-        reject(e);
-      }
-    });
-  }
-  setDefaultStyle(
-    carouselContainerDom,
-    carouselDoms,
-    carouselCount,
-    widthPerCarousel
-  ) {
-    Array.prototype.map.call(carouselDoms, (dom, i) => {
-      dom.className += " ouoCarousel-carousel";
-    });
-
-    carouselContainerDom.style.width = carouselCount * 100 + "%";
-
-    Array.prototype.map.call(carouselDoms, (dom, i) => {
-      dom.style.width = widthPerCarousel + "%";
-    });
-
-    widthPerCarousel = carouselDoms[0].clientWidth;
+  _infinitePositionReset() {
+    if (this.currentNumber === 0) {
+      this.currentNumber = this.uiCarouselCount;
+      setTimeout(() => {
+        this._changeFigure(this.currentNumber, this.widthPerCarousel, false);
+      }, this.transitionTime);
+    } else if (this.currentNumber === this.logicCarouselCount - 1) {
+      this.currentNumber = 1;
+      setTimeout(() => {
+        this._changeFigure(this.currentNumber, this.widthPerCarousel, false);
+      }, this.transitionTime);
+    }
   }
 }
-
-/*
-設定值：
-{
-  supportMobile: true,
-  enableAutoloop: true,
-  enableArrow: true,
-  enableDot: true,
-  carouselContainerDom,
-}
-定義動作：
-1. 製造元素 / 加上 class
-2. 設定寬度
-3. autoloop
-4. 
-
-
-
-*/

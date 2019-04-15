@@ -20,3 +20,12 @@
   font-size: 28px;
   margin: 0;
 }
+.o-pivotContainer{
+text-align: center;
+color: rgb(163, 163, 163);
+}
+.o-pivot{
+  &.is-active{
+    color: rgb(0, 0, 0);
+  }
+}
