@@ -3,18 +3,7 @@ import "./OuoCarousel.scss";
 // TODO: bind animport '../../../sass/molecules/_carousel.scss';
 import { removeClass, addClass } from "./utils/domHelper";
 
-function OuoCarousel({
-  context = document,
-  carouselContainerDom,
-  supportMobile = true,
-  enableAutoloop = true,
-  pivotContainerDom = null,
-  enableDot = true,
-  enableArrow = true,
-  enableInfiniteLoop = false,
-  transitionTime = 300,
-  loopTime = 2000
-}) {}
+
 export default class OuoCarousel {
   constructor({
     context = document,
