@@ -1,49 +1,48 @@
-
 @mixin only-mobile {
-  @media (max-width: 760px){
+  @media (max-width: 760px) {
     @content;
   }
 }
 @mixin tablet {
-  @media (min-width: 760px){
+  @media (min-width: 760px) {
     @content;
   }
 }
 
 @mixin laptop {
-  @media  (min-width: 1024px)   {
+  @media (min-width: 1024px) {
     @content;
   }
 }
 @mixin desktop {
-  @media  (min-width: 1440px)   {
+  @media (min-width: 1440px) {
     @content;
   }
 }
 
-@mixin carousel{
-  @media  (min-width: 680px)   {
+@mixin carousel {
+  @media (min-width: 680px) {
     @content;
   }
 }
 
-.ouoCarousel{
+.ouoCarousel {
   overflow: hidden;
   position: relative;
   width: 100%;
   margin: 0 auto;
 }
-.ouoCarousel-carousel{
-    float: left;
-    display: inline-block;
-    padding: 0;
-    margin: 16px auto 24px;
-    max-width: 100%;
-    margin-top: 8%;
-    max-height: 510px;
-    height: auto;
-    clip-path: polygon(16% 0%, 84% 0%, 84% 100%, 16% 100%);
-    transform: scale(1.47);
+.ouoCarousel-carousel {
+  float: left;
+  display: inline-block;
+  padding: 0;
+  margin: 16px auto 24px;
+  max-width: 100%;
+  margin-top: 8%;
+  max-height: 510px;
+  height: auto;
+  clip-path: polygon(16% 0%, 84% 0%, 84% 100%, 16% 100%);
+  transform: scale(1.47);
   @include carousel {
     clip-path: none;
     max-height: inherit;
@@ -52,74 +51,69 @@
     margin-top: 0;
   }
 }
-.ouoCarousel-dots{
+.ouoCarousel-dots {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 12px;
+  bottom: 0px;
   text-align: center;
-     @include tablet{
-  bottom: 35px;
-    }
+  @include tablet {
+    bottom: 35px;
+  }
 }
-.ouoCarousel-dot{
+.ouoCarousel-dot {
   width: 8px;
   height: 8px;
-  background-color: #d3d3d3;
+  background-color: #fff;
   border-radius: 50%;
   margin: 0 8px;
   display: inline-block;
   cursor: pointer;
-  &.is-active{
+  &.is-active {
     background-color: rgb(255, 241, 115);
   }
+}
 
-}
-.ouoCarousel-dots{
+.ouoCarousel-next,
+.ouoCarousel-prev {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 10px;
-}
-.ouoCarousel-next, .ouoCarousel-prev {
+  top: 50%;
+  width: 40px;
+  height: 100%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  @include tablet {
+    width: 80px;
+    font-size: 4rem;
+  }
+  &:after {
+    top: 45%;
+    content: "";
+    font-size: 2rem;
+    color: #efefef;
+    border: 2px solid #fff;
+    width: 16px;
+    height: 16px;
     position: absolute;
-    top: 50%;
-    width: 40px;
-    height: 100%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    @include tablet{
-      width: 80px;
-      font-size: 4rem;
-    }
-    &:after{
-      top: 45%;
-      content: "";
-      font-size: 2rem;
-      color: #efefef;
-      border: 2px solid #d3d2d3;
-      width: 16px;
-      height: 16px;
-      position: absolute;
-      transform: translateY(-50%) rotate(-45deg);
-    }
+    transform: translateY(-50%) rotate(-45deg);
+  }
 }
 .ouoCarousel-next {
   right: 0;
-  &:after{
+  &:after {
     right: 10px;
     border-top: 0;
-    border-left:0;
+    border-left: 0;
   }
 }
 .ouoCarousel-prev {
   left: 0;
-  &:after{
+  &:after {
     left: 10px;
-     border-bottom: 0;
-    border-right:0;
+    border-bottom: 0;
+    border-right: 0;
   }
 }
-.ouoCarousel-panel{
+.ouoCarousel-panel {
   text-align: center;
 }
