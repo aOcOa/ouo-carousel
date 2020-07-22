@@ -12,6 +12,7 @@
     "css-loader": "^1.0.0",
     "js-yaml": "^3.13.1",
     "jsdom": "^11.11.0",
+    "lodash": "^4.17.19",
     "mocha": "^5.2.0",
     "mocha-webpack": "2.0.0-beta.0",
     "node-sass": "^4.9.2",
